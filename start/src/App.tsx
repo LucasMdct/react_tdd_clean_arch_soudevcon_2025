@@ -1,7 +1,13 @@
-import axios from "axios";
 import { ChangeEventHandler, useCallback, useState } from "react"
+import HttpClient from "./http/HttpClient";
+import { useInject } from "./registry/RegistryProvider";
+import { AccountGateway } from "./gateway/AccountGateway";
 
 function App() {
+const httpClient: HttpClient = useInject('httpClient');
+
+const accountGateway: AccountGateway = useInject('accountGateway');
+
   const [form, setForm] = useState({
     step: 1,
     accountType: '',
@@ -169,9 +175,9 @@ function App() {
     password: form.password,
     }
 
-     const response = await axios.post('https://jsonplaceholder.typicode.com/users', body);
+     const response = await accountGateway.signup(body);
 
-     const successMessage = "Conta criada com sucesso #" + response.data.id;
+     const successMessage = "Conta criada com sucesso #" + response.accountId;
 
        setForm(previous => {
       return{
@@ -179,7 +185,7 @@ function App() {
         success: successMessage
       }
     })
-  }, [form, validate])
+  }, [accountGateway, form, validate])
 
 
   return (

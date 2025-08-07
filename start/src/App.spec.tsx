@@ -1,11 +1,43 @@
-import { describe, expect, test } from 'vitest';
-import { render, fireEvent } from '@testing-library/react';
+import { beforeEach, describe, expect, test } from 'vitest';
+import { render, fireEvent, RenderResult } from '@testing-library/react';
 
 import App from './App';
+import { RegistryProvider } from './registry/RegistryProvider';
+import HttpClient, { ResponseType } from './http/HttpClient';
+import { MockAccountGateway } from './gateway/AccountGateway';
+
+// class MockAdapter implements HttpClient {
+//   get(): Promise<ResponseType> {
+//     return Promise.resolve({
+//       statusCode: 200,
+//       data: {}
+//     });
+//   }
+
+//   post(): Promise<ResponseType> {
+//     return Promise.resolve({
+//       statusCode: 201,
+//       data: { id: 11 }
+//     });
+//   }
+  
+// }
+
+let result: RenderResult
+beforeEach(() => {
+  const registry: Record<string, any> = {
+    accountGateway: new MockAccountGateway()
+  };
+
+  result = render(
+    <RegistryProvider value={registry}>
+      <App />
+    </RegistryProvider>
+  );
+});
 
 describe('App', () => {
   test('Deve testar o fluxo de progresso no preenchimento do formulário', () => {
-    const result = render(<App />)
  
       // Step 1
       expect(result.getByTestId('span-progress').textContent).toBe('0%');
@@ -35,7 +67,6 @@ describe('App', () => {
   });
 
   test('Deve testar a visibilidade dos componentes do formulário', () => {
-    const result = render(<App />);
 
     //STEP 1
     expect(result.queryByDisplayValue('administrator')).toBeInTheDocument();
@@ -91,7 +122,6 @@ describe('App', () => {
   })
 
   test('Deve testar as validações dos campos e o controle do preenchimento do formulário', async() => {
-      const result = render(<App />)
 
       //STEP 1
       fireEvent.click(result.getByTestId('button-next'));
@@ -136,7 +166,7 @@ describe('App', () => {
 
       // Request
       const sucessMessage = await result.findByTestId('span-success');
-      expect(sucessMessage.textContent).toBe('Conta criada com sucesso #11');
+      expect(sucessMessage.textContent).toBe('Conta criada com sucesso #12');
       expect(sucessMessage).toBeInTheDocument();
 
   })
