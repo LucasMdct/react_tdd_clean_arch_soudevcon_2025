@@ -1,3 +1,4 @@
+import axios from "axios";
 import { ChangeEventHandler, useCallback, useState } from "react"
 
 function App() {
@@ -9,10 +10,11 @@ function App() {
     role: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    error: '',
+    success: ''
   })
 
-  console.log('form', form)
 
   function calculateProgress() {
     let progress = 0;
@@ -37,14 +39,113 @@ function App() {
     })
   }, []);
 
+  const validate = useCallback(() => {
+    if(form.step === 1 && !form.accountType ) {
+      setForm(previous => {
+        return {
+          ...previous,
+          error: 'Selecione o tipo da conta'
+        };
+      });
+      return false;
+    };
+
+    if(form.step === 2) {
+      if(!form.name) {
+        setForm(previous => {
+          return {
+            ...previous,
+            error: 'Preencha o seu nome'
+          };
+        });
+        return false;
+      }
+
+      if(!form.documentNumber) {
+        setForm(previous => {
+          return {
+            ...previous,
+            error: 'Preencha o seu CPF'
+          };
+        });
+        return false;
+      }
+
+      if(!form.role) {
+        setForm(previous => {
+          return {
+            ...previous,
+            error: 'Preencha o seu cargo'
+          };
+        });
+        return false;
+      }
+    };
+
+    if(form.step === 3) {
+      if(!form.email) {
+        setForm(previous => {
+          return {
+            ...previous,
+            error: 'Preencha o seu email'
+          };
+        });
+        return false;
+      }
+
+      if(!form.password) {
+        setForm(previous => {
+          return {
+            ...previous,
+            error: 'Preencha a sua senha'
+          };
+        });
+        return false;
+      }
+
+      if(!form.confirmPassword) {
+        setForm(previous => {
+          return {
+            ...previous,
+            error: 'Preencha a sua confirmação de senha'
+          };
+        });
+        return false;
+      }
+
+      if(form.password !== form.confirmPassword) {
+        setForm(previous => {
+          return {
+            ...previous,
+            error: 'As senhas não conferem'
+          };
+        });
+        return false;
+      }
+
+    };
+
+
+      setForm(previous => {
+        return {
+          ...previous,
+          error: ''
+        };
+      });
+    
+    return true
+    }, [form])
+
   const next = useCallback(() => {
+    if(!validate()) return;
+
     setForm(previous => {
       return{
         ...previous,
         step: previous.step + 1
       }
     })
-  }, [])
+  }, [validate])
 
 
   const previous = useCallback(() => {
@@ -55,6 +156,31 @@ function App() {
       }
     })
   }, [])
+
+  const confirm = useCallback(async() => {
+    if(!validate()) return;
+
+    const body = {
+    accountType: form.accountType,
+    name: form.name,
+    role: form.role,
+    documentNumber: form.password,
+    email: form.email,
+    password: form.password,
+    }
+
+     const response = await axios.post('https://jsonplaceholder.typicode.com/users', body);
+
+     const successMessage = "Conta criada com sucesso #" + response.data.id;
+
+       setForm(previous => {
+      return{
+        ...previous,
+        success: successMessage
+      }
+    })
+  }, [form, validate])
+
 
   return (
     <div>
@@ -68,6 +194,22 @@ function App() {
       <span>Passo:{' '}</span>
       <span data-testid="span-step">{form.step}</span>
     </div>
+
+{form.error ? (
+    <div>
+      <span>Erro:{' '}</span>
+      <span data-testid="span-error">{form.error}</span>
+    </div>
+) : null}
+
+
+{form.success ? (
+  <div>
+    <span>Sucesso:{' '}</span>
+    <span data-testid="span-success">{form.success}</span> 
+  </div>
+) : null}
+
       </div>
 
      {/*STEP 1 */}
@@ -117,8 +259,14 @@ function App() {
 
 
       <div>
-        <button data-testid="button-previous"  onClick={previous}>Voltar</button>
-        <button data-testid="button-next"  onClick={next}>Proximo</button>
+        {form.step > 1 ? (
+          <button data-testid="button-previous"  onClick={previous}>Voltar</button>
+        ) : null}
+        {form.step < 3 ? (
+          <button data-testid="button-next"  onClick={next}>Proximo</button>
+        ): (
+          <button data-testid="button-confirm"  onClick={confirm}>Confirmar</button>
+        )}
       </div>
     </div>
   )
